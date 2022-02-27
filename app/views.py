@@ -7,7 +7,7 @@ This file creates your application.
 from fileinput import filename
 import os
 from app import app
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from flask import send_from_directory, render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.utils import secure_filename
 from app.forms import UploadForm
 
@@ -30,27 +30,51 @@ def about():
 
 @app.route('/upload', methods=['POST', 'GET'])
 def upload():
-    form = UploadForm()
+    
     if not session.get('logged_in'):
         abort(401)
 
     # Instantiate your form class
-
+    form = UploadForm()
     # Validate file upload on submit
     if request.method == 'POST':
         # Get file data and save to your uploads folder
         
         if form.validate_on_submit():
-            photo = form.img.data
-            validate_filename = secure_filename(photo.validate_filename)
-            photo.save(os.path.join(app.config['UPLOAD_FOLDER'], validate_filename))
+            image = form.image.data
+            filename = secure_filename(image.filename)
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-        flash('File Saved', 'success')
-        return redirect(url_for('home'))
+            flash('File Saved', 'success')
+            return redirect(url_for('home'))
     return render_template('upload.html', form=form)
 
-    
 
+def get_uploaded_images():
+    if not session.get('logged_in'):
+        abort(401)
+
+    uploads='/uploads'
+    typelist=[]
+    rootdir = os.getcwd()
+    for subdir, dirs, files in os.walk(rootdir + uploads):
+        for file in files:
+            if file.endswith(('.jpg', '.png', 'jpeg','JPEG', 'PNG', 'JPG')):
+                typelist.append(file)
+    return typelist
+
+@app.route('/uploads/<filename>')   
+def get_image(filename):
+    if not session.get('logged_in'):
+        abort(401)
+    return send_from_directory(os.path.join(os.getcwd(),app.config['UPLOAD_FOLDER']), filename)
+
+@app.route('/files')
+def files():
+    if not session.get('logged_in'):
+        abort(401)
+    typelist = get_uploaded_images()
+    return render_template('files.html', typelist=typelist)
 
 
 @app.route('/login', methods=['POST', 'GET'])
