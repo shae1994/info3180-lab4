@@ -6,10 +6,10 @@
 {% include 'flash_messages.html' %}
 
 <ul>
+    <div class = "grid-container">
     {% for image in typelist %}
-   
-    <li><img src="{{url_for('get_image', filename = image)}}"/></li>
+    <img src="{{url_for('get_image', filename = image)}}"/>
     {%endfor%}
-
+    </div>
 </ul>
 {% endblock %}
